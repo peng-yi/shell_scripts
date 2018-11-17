@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+# Submit batch of jobs, with varying Tm and mu1
+#
+# Author: Peng Yi @ JHU
+#
+# Date: 8/23/2018
+#
 
 if [ $# -ne 2 ]
 then
