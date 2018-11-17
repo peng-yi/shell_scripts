@@ -1,6 +1,10 @@
 #!/bin/sh
 #
-# 2/1/2017
+# Delete jobs with job id from #1 to #2
+#
+# Author: Peng Yi @ JHU
+#
+# Created: 2/1/2017
 #
 
 if [ $# -ne 2 ]
