@@ -1,0 +1,63 @@
+#!/bin/bash
+Project="Cu64Zr36_3D"
+PPATH="/home-1/druan1@jhu.edu/Projects/${Project}"
+TPATH="/home-1/druan1@jhu.edu/work/druan1/${Project}"
+step="generation"
+sab="gen"
+TRIAL=(1) #(0 1 2)
+#VSEED=(112233 567890 234567)
+VSEED=(787878) #(123456 789012 345678)
+#CSEED=(332211 098765 765432)
+CSEED=(565656)  #(901234 567890 102938)
+Nodes=(10) #(6 8) #(5 6 8 10)
+Procs=(24 24 24 24) 
+Hours=(30) #(10 15 20 30)
+Days=(0 0 0 0)
+Part=("parallel" "parallel" "parallel" "parallel")
+acco="mshiel10"
+#0.5 0.75 1.25 1.5 1.75 2.0 * 68
+NBlock=(136)  #(85 102 119 136)
+
+for (( i = 0; i < ${#NBlock[@]}; i++)); do
+    Nblock=${NBlock[$i]}
+    echo -e "$i/${#NBlock[@]} ${Nblock}"
+    part=${Part[$i]}
+    nodes=${Nodes[$i]}
+    procs=${Procs[$i]}
+    hours=${Hours[$i]}
+    days=${Days[$i]}
+    mem=$(echo -e "scale=4; 5*5*(${Nblock}*${Nblock}*${Nblock}/68/68/68)/${nodes}/${procs}*2*1024" | bc |cut -f1 -d".")
+    mem=$[(${mem}+1)]
+    echo -e "${mem}"
+    for (( j = 0; j < ${#TRIAL[@]}; j++)); do
+        trial=${TRIAL[$j]}
+	Cseed=${CSEED[$j]}
+        Vseed=${VSEED[$j]}
+    	qsubFile="${TPATH}/simulations/${step}/submission/${sab}${Nblock}_trial${trial}_${Project}.qsub"
+        echo -e "${qsubFile}"
+    	echo -e "#!/bin/bash -l \n \n" > ${qsubFile}
+    	echo -e "#SBATCH \n" >> ${qsubFile}
+    	echo -e "#SBATCH --job-name=${sab}${Nblock}_${trial}_${Project} \n" >> ${qsubFile}
+   	 echo -e "#SBATCH --time=${days}-${hours}:00:00 \n" >> ${qsubFile}
+    	echo -e "#SBATCH --nodes=${nodes} \n" >> ${qsubFile}
+   	 echo -e "#SBATCH --ntasks-per-node=${procs} \n" >> ${qsubFile}
+    	echo -e "#SBATCH --mem-per-cpu=${mem} \n" >> ${qsubFile}
+    	echo -e "#SBATCH --partition=${part} \n" >> ${qsubFile}
+    	echo -e "#SBATCH --account=${acco} \n" >> ${qsubFile}
+    	echo -e "#SBATCH --mail-type=end \n" >> ${qsubFile}
+    	echo -e "#SBATCH --mail-user=druan1@jhu.edu \n" >> ${qsubFile}
+   	 echo -e "#SBATCH --output=${TPATH}/simulations/${step}/out/${sab}${Nblock}_trial${trial}_${Project}.out \n \n" >> ${qsubFile}
+
+    	#echo -e "module unload openmpi/intel/1.8.4 \n \n" >> ${qsubFile}
+    	echo -e "module load openmpi/intel/1.8.4 \n \n" >> ${qsubFile}
+  
+    	#echo -e "module load mvapich2/2.1rc2 \n" >> ${qsubFile}
+    	echo -e "module load lammps \n \n" >> ${qsubFile}
+      
+    	echo -e "time  mpiexec  lmp_mpi-all < ${PPATH}/simulations/lammps_inputs/genTh_sysize.lammps -var PATH ${TPATH} -var PPATH ${PPATH} -var TRIAL ${trial} -var PROJECT ${Project} -var CSEED ${Cseed} -var VSEED ${Vseed} -var NBLOCK ${Nblock} -log ${TPATH}/simulations/${step}/log/${sab}${Nblock}_trial${trial}_${Project}.log" >> ${qsubFile}
+   
+  
+   	# /cm/shared/apps/slurm/current/bin/sbatch ${qsubFile}
+   	sbatch ${qsubFile}
+    done
+done 

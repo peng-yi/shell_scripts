@@ -1,0 +1,41 @@
+#!/bin/bash
+Project="Cu64Zr36_3D"
+TPATH="/home-1/druan1@jhu.edu/Projects/${Project}"
+step="generation"
+sab="gen"
+TRIAL=(0 1 2)
+CSEED=(112233 567890 234567)
+VSEED=(332211 098765 765432)
+nodes=5
+procs=24
+hours="03"
+days="00"
+part="parallel"
+acco="mshiel10"
+
+for (( i == 0; i < ${#TRIAL[@]}; i++)); do
+    qsubFile="${TPATH}/simulations/${step}/submission/${sab}_trial${TRIAL[$i]}_${Project}.qsub"
+    echo -e "#!/bin/bash -l \n \n" > ${qsubFile}
+    echo -e "#SBATCH \n" >> ${qsubFile}
+    echo -e "#SBATCH --job-name=${sab}_trial${TRIAL[$i]}_${Project} \n" >> ${qsubFile}
+    echo -e "#SBATCH --time=${days}-${hours}:00:00 \n" >> ${qsubFile}
+    echo -e "#SBATCH --nodes=${nodes} \n" >> ${qsubFile}
+    echo -e "#SBATCH --ntasks-per-node=${procs} \n" >> ${qsubFile}
+    echo -e "#SBATCH --partition=${part} \n" >> ${qsubFile}
+    echo -e "#SBATCH --account=${acco} \n" >> ${qsubFile}
+    echo -e "#SBATCH --mail-type=end \n" >> ${qsubFile}
+    echo -e "#SBATCH --mail-user=druan1@jhu.edu \n" >> ${qsubFile}
+    echo -e "#SBATCH --output=${TPATH}/simulations/${step}/out/${sab}_trial${TRIAL[$i]}_${Project}.out \n \n" >> ${qsubFile}
+
+    #echo -e "module unload openmpi/intel/1.8.4 \n \n" >> ${qsubFile}
+    echo -e "module load openmpi/intel/1.8.4 \n \n" >> ${qsubFile}
+  
+    #echo -e "module load mvapich2/2.1rc2 \n" >> ${qsubFile}
+    echo -e "module load lammps \n \n" >> ${qsubFile}
+      
+    echo -e "time   mpiexec lmp_mpi-all < ${TPATH}/simulations/lammps_inputs/genTh.lammps -var PATH ${TPATH} -var TRIAL ${TRIAL[$i]} -var PROJECT ${Project} -var CSEED ${CSEED[$i]} -var VSEED ${VSEED[$i]} -log ${TPATH}/simulations/${step}/log/${sab}_trial${TRIAL[$i]}_${Project}.log" >> ${qsubFile}
+   
+  
+   # /cm/shared/apps/slurm/current/bin/sbatch ${qsubFile}
+  # sbatch ${qsubFile}
+done 
