@@ -1,36 +1,42 @@
 #!/bin/sh
 
-if [ $# -ne 4 ]
+if [ $# -ne 2 ]
 then
-   echo "$(basename $0) number1 number2 label"
+   echo "$(basename $0) number1 number2"
    exit 1
 fi
 
 T0=700
 dT=100
-label=$3
+mu0=-1.88
+dmu=0.002
 
 for ((i=$1; i<=$2; i++))
 
 do
    Tm=$((T0+(i-$1)*dT))
+   di=$((i-$1))
+
+   mu1=$(echo "scale=3;$mu0-$di*$dmu"|bc)
+
+   echo Tm=$Tm
+   echo mu1=$mu1
 
    mkdir run$i
 
    cd /$PWD/run$i
    cp /$PWD/../*.mod ./
-   cp /$PWD/../in.melting ./
-   cp /$PWD/../cuzr* ./
+   cp /$PWD/../in.* ./
+   cp /$PWD/../mg* ./
    cp /$PWD/../job.scr ./
    cp /$PWD/../data.lmp ./
 
-   file="in.melting"
+   file="in.equil"
    sed -i "s/#runid/$i/g" $file
-   sed -i "s/#Tm/$Tm.0/g" $file
+   sed -i "s/#mu1/$mu1/g" $file
 
    file="job.scr"
    sed -i "s/#runid/$i/g" $file
-   sed -i "s/#label/$label/g" $file
 
    qsub job.scr
 
